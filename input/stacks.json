@@ -1,0 +1,24 @@
+[
+  {
+    "StackName": "devops",
+    "Profile": "master",
+    "Region": "ap-southeast-2",
+    "Modules": [
+      {
+        "Name": "networking",
+        "Parameters": [
+          {"ParameterKey": "VpcCidr","ParameterValue": "10.0.0.0/16"},
+          {"ParameterKey": "PublicSubnetAddresses1","ParameterValue": "10.0.10.0/24"},
+          {"ParameterKey": "PublicSubnetAddresses2","ParameterValue": "10.0.20.0/24"}
+        ]
+      },
+      {
+        "Name": "compute",
+        "Parameters": [
+          {"ParameterKey": "ImageId","ParameterValue": "ami-0bc49f9283d686bab"},
+          {"ParameterKey": "InstanceType","ParameterValue": "t2.micro"}
+        ]
+      }
+    ]
+  }
+]

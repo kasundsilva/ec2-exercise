@@ -1,0 +1,179 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: All compute objects
+Parameters:
+  VPCId:
+    Type: String
+  PublicSubnetA:
+    Type: String
+  ImageId:
+    Type: String
+  InstanceType:
+    Type: String
+  PremisesIP:
+    Type: String
+
+Resources:
+
+  ############ security
+
+  InstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Join ['', [!Ref "AWS::StackName", "-instanceSecurityGroup" ]]
+      GroupDescription: !Join ['Security Group for ', [StackName, !Ref 'AWS::StackName']]
+      VpcId: !Ref "VPCId"
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '22'
+          ToPort: '22'
+          CidrIp: !Join ['', [!Ref "PremisesIP", "/32" ]] # from premises
+        - IpProtocol: tcp
+          FromPort: '80'
+          ToPort: '80'
+          CidrIp: !Join ['', [!Ref "PremisesIP", "/32" ]] # from premises
+        - IpProtocol: icmp
+          FromPort: '-1'
+          ToPort: '-1'
+          CidrIp: 0.0.0.0/0 # Ping from all
+      SecurityGroupEgress:
+        - IpProtocol: '-1'
+          CidrIp: 0.0.0.0/0
+
+  ############ instance
+
+  Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref 'ImageId'
+      KeyName: !Join ['', [!Ref "AWS::StackName", "-admin" ]]
+      InstanceType: !Ref 'InstanceType'
+      UserData:
+        Fn::Base64:
+          !Sub |
+          #!/bin/bash -x
+
+          echo
+          echo "installing the dependencies..."
+          echo
+
+          apt-get update
+          apt-get -y install apt-transport-https ca-certificates curl gnupg-agent software-properties-common
+
+          echo
+          echo "preparing the docker repository..."
+          echo
+
+          curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
+
+          add-apt-repository \
+          "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+          $(lsb_release -cs) \
+          stable"
+
+          echo
+          echo "installing docker..."
+          echo
+
+          apt-get -y install docker-ce docker-ce-cli containerd.io
+
+          echo
+          echo "setting up access for the ubuntu user..."
+          echo
+
+          usermod -aG docker ubuntu
+
+          echo
+          echo "preparing the nginx configuration and folders..."
+          echo
+
+          mkdir -pv /home/ubuntu/www /home/ubuntu/conf /home/ubuntu/scripts
+
+          echo "server {
+            listen       80;
+            listen  [::]:80;
+            server_name  localhost;
+
+            location / {
+              types {text/plain log;}
+              root   /usr/share/nginx/html;
+              index  index.html index.htm;
+            }
+
+            # redirect server error pages to the static page /50x.html
+            error_page   500 502 503 504  /50x.html;
+            location = /50x.html {
+              root   /usr/share/nginx/html;
+            }
+          }
+          " > /home/ubuntu/conf/default.conf
+
+          echo
+          echo "starting the container..."
+          echo
+
+          docker run -d -p 80:80 -v /home/ubuntu/www:/usr/share/nginx/html/resource -v /home/ubuntu/conf/default.conf:/etc/nginx/conf.d/default.conf --name="dummy-nginx" nginx
+
+          echo
+          echo "preparing the scripts..."
+          echo
+
+          echo "SHELL=/bin/bash
+          * * * * * ( sleep 10 ; docker stats --no-stream dummy-nginx >> /home/ubuntu/www/resource.log )" > /home/ubuntu/scripts/health
+          crontab /home/ubuntu/scripts/health
+
+          echo "#!/bin/bash
+          echo
+          echo \"################################################################################################################\"
+          echo \"Info...\"
+          echo \"################################################################################################################\"
+          echo
+
+          echo
+          echo \"curl -s http://localhost gets the raw data\"
+          echo \"sed -e 's/<[^>]*>//g' removes the html tags\"
+          echo \"tr -c '[:alnum:]' '[\n*]' extracts the words\"
+          echo \"fgrep -v -w -f /usr/share/groff/current/eign eliminates words like \"the\" or \"of\" from the list\"
+          echo \"the other commands (sort | uniq -c | sort -nr | awk '{print $2}' | sed -n 2p) sort, find the unique words, and display only the top listed word\"
+          echo
+
+          echo
+          echo \"################################################################################################################\"
+          echo \"Execution...\"
+          echo \"################################################################################################################\"
+          echo
+
+          curl -s http://localhost | sed -e 's/<[^>]*>//g' | tr -c '[:alnum:]' '[\n*]' | fgrep -v -w -f /usr/share/groff/current/eign | sort | uniq -c | sort -nr | awk '{print \$2}' | sed -n 2p
+          " > /home/ubuntu/scripts/nginx-word.sh
+
+          chmod 770 /home/ubuntu/scripts/nginx-word.sh
+          chown -R ubuntu: /home/ubuntu
+      BlockDeviceMappings:
+        - DeviceName: "/dev/sdm"
+          Ebs:
+            VolumeType: "io1"
+            Iops: "200"
+            DeleteOnTermination: "false"
+            VolumeSize: "30"
+        - DeviceName: "/dev/sdk"
+          NoDevice: {}
+      NetworkInterfaces:
+        - DeviceIndex: "0"
+          GroupSet:
+            - !Ref "InstanceSecurityGroup"
+          SubnetId:
+            !Ref "PublicSubnetA"
+      Tags:
+        - Value: "Instance"
+          Key: Name
+
+  InstanceElasticIPAddress:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: VPC
+  InstanceElasticIPAddressAssociation:
+    Type: AWS::EC2::EIPAssociation
+    Properties:
+      AllocationId: !GetAtt InstanceElasticIPAddress.AllocationId
+      InstanceId: !Ref "Instance"
+
+
