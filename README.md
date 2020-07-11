@@ -6,7 +6,15 @@ The whole process has been automated using bash and cloudformation and is intend
 
 The automation creates the network and compute objects needed to perform the required tasks.
 
-The parameters needed are be set in the "input/stacks.json" file.
+The parameters needed are set in the "input/stacks.json" file.
+
+# Risks involved in this set up
+
+It does not include a WAF firewall such as AWS WAF to protect the page against attacks such as SQL injection.
+
+This instance has no protection (e.g.: AWS Shield) against DDOS attacks.
+
+This instance does not scale automatically and does not have a load balancer, making it very hard to handle high amounts of requests caused by spikes.
 
 # Pre-requisites and set up
 
