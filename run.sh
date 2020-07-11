@@ -3,6 +3,9 @@
 # exit when an error occurs
 set -e
 
+# create the output folder if it doesn't exist
+mkdir -pv output
+
 echo ""
 echo "################################################################################################################"
 echo "Preparing the variables..."
@@ -62,6 +65,9 @@ applyTemplate(){
     parameters=$(echo "$parameters" | jq ". += $outputs")
   fi
 
+  echo
+  echo "------------- variables:"
+  echo
   echo "profile: $profile"
   echo "region: $region"
   echo "moduleName: $moduleName"
@@ -102,6 +108,9 @@ applyTemplate(){
     parameters=$(echo "$parameters" | jq ". += [{\"ParameterKey\": \"PremisesIP\",\"ParameterValue\": \"$premisesIP\"}]")
   fi
 
+  echo
+  echo "------------- variables:"
+  echo
   echo "parameters: $parameters"
   echo
 
@@ -128,7 +137,6 @@ applyTemplate(){
   --profile "$profile" \
   --stack-name "$stackId"
 }
-
 
 echo
 echo "------------- record variable values:"
