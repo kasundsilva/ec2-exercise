@@ -66,6 +66,6 @@ if running on Windows, run it on a shell application such as "git bash" (https:/
 # Cleanup
 
 - Access the AWS console from your web browser then go to the cloudformation service of the chosen region.
-- Select the compute stack (e.g.: devops-compute) then click on "Delete". Confirm by clicking on "Delete Stack"
-- Do the same to the network stack (e.g.: devops-network)
+- Select the compute stack (e.g.: devops-compute) then click on "Delete". Confirm by clicking on "Delete Stack".
+- Do the same to the network stack (e.g.: devops-network).
 
