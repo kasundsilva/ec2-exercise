@@ -8,7 +8,7 @@ The automation creates the network and compute objects needed to perform the req
 
 The parameters needed are set in the "input/stacks.json" file.
 
-# Risks involved in this set up
+# Risks involved with this set up
 
 It does not include a WAF firewall such as AWS WAF to protect the page against attacks such as SQL injection.
 
@@ -22,8 +22,8 @@ This instance does not scale automatically and does not have a load balancer, ma
 if running on Windows, run it on a shell application such as "git bash" (https://www.stanleyulili.com/git/how-to-install-git-bash-on-windows/).
 - You need an AWS account available. The one offered for free (https://aws.amazon.com/free) is more than enough for this exercise.
 - Configure an AWS cli profile using the instructions from https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html and https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-quickstart.html.
-- Set the value of "Profile" in the "input/stacks.json" file to the name of the AWS profile you set up in the previous step (this document assumes you're using a profile called "master"). Do the same for the "Region" parameter. 
-- install the jq command line json processor (https://stedolan.github.io/jq/download/).
+- Set the value of "Profile" in the "input/stacks.json" file to the name of the AWS profile you set up in the previous step. Do the same for the "Region" parameter. This document assumes you're using a profile called "master" and the "ap-southeast-2" region. 
+- Install the jq command line json processor (https://stedolan.github.io/jq/download/).
 
 # Usage
 
@@ -38,7 +38,8 @@ if running on Windows, run it on a shell application such as "git bash" (https:/
 - Get the logs' URL from the command line
 
     ```
-    echo "http://$(aws ec2 describe-instances --filters Name=tag-key,Values=Name Name=tag-value,Values=Instance --profile master | jq -r .Reservations[].Instances[].PublicDnsName)/resource/resource.log"
+    echo "http://$(aws ec2 describe-instances --filters 'Name=tag:Name,Values=Instance' --output text --query 'Reservations[*].Instances[*].PublicDnsName' --profile master --region ap-southeast-2)/resource/resource.log"
+    
     ```
 
 - Access the logs' URL from the previous command using a web browser
@@ -48,7 +49,7 @@ if running on Windows, run it on a shell application such as "git bash" (https:/
 - Access the instance from the command line
 
     ```
-    ssh -i output/devops-compute-admin.pem ubuntu@$(aws ec2 describe-instances --filters Name=tag-key,Values=Name Name=tag-value,Values=Instance --profile master | jq -r .Reservations[].Instances[].PublicDnsName)
+    ssh -i output/devops-compute-admin.pem ubuntu@$(aws ec2 describe-instances --filters 'Name=tag:Name,Values=Instance' --output text --query 'Reservations[*].Instances[*].PublicDnsName' --profile master --region ap-southeast-2)
     ```
 
 - Type the following in the command line. The result will be under the "Execution" section

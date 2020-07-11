@@ -101,8 +101,7 @@ applyTemplate(){
       echo "------------- creating the .pem file..."
       echo
 
-      # TODO: test this
-      jq .KeyMaterial "output/$stackName-admin.json" > "output/$stackName-admin.pem"
+      jq -r .KeyMaterial "output/$stackName-admin.json" > "output/$stackName-admin.pem"
     fi
 
     parameters=$(echo "$parameters" | jq ". += [{\"ParameterKey\": \"PremisesIP\",\"ParameterValue\": \"$premisesIP\"}]")
