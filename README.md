@@ -8,7 +8,7 @@ The automation creates the network and compute objects needed to perform the req
 
 The parameters needed are set in the "input/stacks.json" file.
 
-# Risks involved with this set up
+# Risks involved
 
 It does not include a WAF firewall such as AWS WAF to protect the page against attacks such as SQL injection.
 
