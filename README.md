@@ -63,7 +63,7 @@ if running on Windows, run it on a shell application such as "git bash" (https:/
     exit
     ```
 
-#### Cleanup
+# Cleanup
 
 - Access the AWS console from your web browser then go to the cloudformation service of the chosen region.
 - Select the compute stack (e.g.: devops-compute) then click on "Delete". Confirm by clicking on "Delete Stack"
